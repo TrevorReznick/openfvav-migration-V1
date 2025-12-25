@@ -7,7 +7,7 @@ import { loadConfig } from '../../../src/core/config-loader.js';
 describe('Config Loader', () => {
   const testDirs = ['test-v4', 'test-v6'];
   const testConfig = {
-    version: "2.0.0",
+    version: "2.0",
     paths: {
       v4: './test-v4',
       v6: './test-v6'
@@ -49,7 +49,7 @@ describe('Config Loader', () => {
   it('should load and validate a valid config', () => {
     const config = loadConfig();
     expect(config).toBeDefined();
-    expect(config.version).toBe('2.0.0');
+    expect(config.version).toBe('2.0'); // Match the version in testConfig
     expect(config.paths.v4).toContain('test-v4');
     expect(config.paths.v6).toContain('test-v6');
   });

@@ -1,0 +1,8 @@
+:root {
+  /* @inject:primary */
+  --primary: 217 91% 60%;
+  /* @inject:background */
+  --background: 222 47% 11%;
+  /* @inject:spacing-1 */
+  --spacing-1: 0.25rem;
+}
