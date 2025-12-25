@@ -1,6 +1,6 @@
 {
   "name": "openfav-migration-pipeline",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Professional Design System Hydration: Mapping V3/V4 to V6 Core",
   "type": "module",
   "main": "src/cli.js",
