@@ -88,15 +88,21 @@ describe('TokenEngine - Full Real Pipeline', () => {
     // Execute complete pipeline
     const result = await engine.run('v4', 'v6');
 
-    // Verify result - 3 colors + 2 spacing + 1 typography = 6 changes, but we have 8 due to additional file injections
-    expect(result.changes).toBe(8);
+    // Verify result - 3 colors × 2 file = 6
+    // 2 spacing × 2 file = 4
+    // 1 typography × 2 file = 2
+    // Totale: 12 tentativi
+    // Ma 3 tag mancano in globals.css (card, spacing-4, font-sans)
+    // Quindi: 12 - 3 = 9 SUCCESSI
+    expect(result.changes).toBe(9);
+    expect(result.warnings).toHaveLength(3); // Verifica i 3 warnings
 
     // Verify files were actually modified
     const tokensContent = readFileSync(`${TEST_V6}/src/lib/tokens.ts`, 'utf-8');
     expect(tokensContent).toContain("primary: '217 91% 60%'"); // #3B82F6 → HSL
     expect(tokensContent).toContain("background: '222 47% 11%'"); // #0F172A → HSL
     expect(tokensContent).toContain("1: '0.25rem'"); // Spacing
-    expect(tokensContent).toContain("sans: \"'Inter', system-ui, sans-serif\""); // Font
+    expect(tokensContent).toContain("sans: 'Inter, system-ui, sans-serif'"); // Font
 
     const globalsContent = readFileSync(`${TEST_V6}/src/styles/globals.css`, 'utf-8');
     expect(globalsContent).toContain('--primary: 217 91% 60%;');
@@ -134,7 +140,7 @@ describe('TokenEngine - Full Real Pipeline', () => {
     
     const afterContent = readFileSync(`${dryRunV6}/src/lib/tokens.ts`, 'utf-8');
     
-    expect(result.changes).toBe(8);
+    expect(result.changes).toBe(9);
     expect(afterContent).toBe(beforeContent); // Files should NOT be modified in dry-run mode
     
     // Clean up

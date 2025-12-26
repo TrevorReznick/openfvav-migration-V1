@@ -3,33 +3,36 @@ import chalk from 'chalk';
 
 /**
  * Inietta un valore in un file basandosi sul tag @inject:key
+ * @param {string} filePath - Percorso del file
+ * @param {string} key - Chiave del token (es: 'primary' o 'spacing-1')
+ * @param {string} value - Valore da iniettare
+ * @param {boolean} dryRun - Se true, NON modifica il file
+ * @returns {boolean} - true se l'iniezione è riuscita, false se il tag non è stato trovato
  */
 export function injectValue(filePath, key, value, dryRun = false) {
   if (!existsSync(filePath)) {
-    console.warn(chalk.yellow(`⚠️ File non trovato per iniezione: ${filePath}`));
+    console.warn(chalk.yellow(`⚠️  File not found: ${filePath}`));
     return false;
   }
+
   try {
-    let content = readFileSync(filePath, 'utf-8');
-
-    // Pattern migliorato per gestire meglio i casi limite
-    const pattern = `(@inject:${key}[^\\n]*\\n[\\s\\S]*?)([\\w-]+\\s*:\\s*['"]?)([^;'",}]+)(['"]?\\s*[;,]?)`;
-    const regex = new RegExp(pattern, 'g');
-
-    // Verifica se il pattern esiste nel contenuto
-    if (!regex.test(content)) {
-      console.warn(chalk.yellow(`⚠️ Tag @inject:${key} non trovato in ${filePath}`));
+    const content = readFileSync(filePath, 'utf-8');
+    
+    // Regex per trovare il tag @inject e il valore nella riga successiva
+    const regex = new RegExp(`(@inject:${key}.*?[\\r\\n]+\\s*)([\\w-]+\\s*:\\s*['"]?)([^;'",\\r\\n]+)(['"]?\\s*[;,]?)`, 'g');
+    
+    if (!content.match(regex)) {
       return false;
     }
-    // Resetta l'ultimo indice della regex
-    regex.lastIndex = 0;
 
-    // Esegui la sostituzione
-    const updatedContent = content.replace(regex, `$1$2${value}$4`);
-    if (!dryRun) {
-      writeFileSync(filePath, updatedContent, 'utf-8');
+    // Se siamo in dryRun, NON eseguiamo la sostituzione né la scrittura
+    if (dryRun === true || dryRun === 'true') {
+      return true; // Match trovato, operazione simulata con successo
     }
 
+    const newContent = content.replace(regex, `$1$2${value}$4`);
+    writeFileSync(filePath, newContent);
+  
     return true;
   } catch (error) {
     console.error(chalk.red(`❌ Errore durante l'iniezione in ${filePath}:`), error);

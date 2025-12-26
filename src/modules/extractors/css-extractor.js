@@ -106,12 +106,15 @@ function normalizeExtractedTokens(raw) {
     }
   }
 
-  // Normalizza typography: rimuovi prefisso font-
-  for (const [key, val] of Object.entries(raw.typography || {})) {
-    if (key.startsWith('--font-')) {
-      typography[key.replace('--font-', '')] = val;
-    }
-  }
+  // Normalizza typography: rimuovi prefisso font- e formatta correttamente il valore
+  const normalizedTypography = {};
+  Object.entries(raw.typography || {}).forEach(([k, v]) => {
+    const cleanKey = k.replace(/^--font-/, '');
+    // Rimuove apici singoli o doppi all'inizio e alla fine, poi racchiude tutto in un solo paio di apici singoli
+    // Rimuove TUTTI gli apici singoli/doppi dal valore
+    const fullyCleanValue = v.trim().replace(/['"]/g, "");
+    normalizedTypography[cleanKey] = fullyCleanValue;
+  });
 
-  return { colors, spacing, typography };
+  return { colors, spacing, typography: normalizedTypography };
 }

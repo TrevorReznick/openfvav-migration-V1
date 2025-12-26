@@ -35,7 +35,7 @@ export class TokenEngine {
     this.logger.success(`✅ Hydrated ${result.changes} values`);
     
     if (result.warnings.length > 0) {
-      this.logger.warning(`⚠️ ${result.warnings.length} warnings (missing @inject tags in template)`);
+      this.logger.warning(`⚠️  ${result.warnings.length} warnings (missing @inject tags in template)`);
     }
     
     return result;
@@ -48,7 +48,7 @@ export class TokenEngine {
     this.logger.info(`🚀 Starting token pipeline: ${sourceVersion} → ${targetVersion}`);
     
     const tokens = await this.extract(sourceVersion);
-    const result = await this.hydrate(tokens, targetVersion, options);
+    const result = await this.hydrate(tokens, targetVersion, this.config.options);
     
     this.logger.info('🎉 Token migration completed successfully');
     return result;

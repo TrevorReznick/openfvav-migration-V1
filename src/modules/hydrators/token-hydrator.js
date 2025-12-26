@@ -31,37 +31,66 @@ export async function hydrateTokens(destPath, tokens, options = {}) {
     
     // Inietta in tokens.ts
     const tsSuccess = injectValue(tokensFile, key, hslValue, dryRun);
-    if (tsSuccess) totalChanges++;
+    if (tsSuccess) {
+      totalChanges++;
+    } else {
+      warnings.push(`Tag @inject:${key} not found in ${tokensFile}`);
+    }
     
     // Inietta in globals.css
     const cssSuccess = injectValue(globalsFile, key, hslValue, dryRun);
-    if (cssSuccess) totalChanges++;
+    if (cssSuccess) {
+      totalChanges++;
+    } else {
+      warnings.push(`Tag @inject:${key} not found in ${globalsFile}`);
+    }
   }
 
   // 2. Idrata lo Spacing
   for (const [key, value] of Object.entries(tokens.spacing || {})) {
     // In tokens.ts: spacing.1 = '0.25rem'
     const tsSuccess = injectValue(tokensFile, key, value, dryRun);
-    if (tsSuccess) totalChanges++;
+    if (tsSuccess) {
+      totalChanges++;
+    } else {
+      warnings.push(`Tag @inject:${key} not found in ${tokensFile}`);
+    }
     
     // In globals.css: --spacing-1: 0.25rem
     const cssKey = `spacing-${key}`;
     const cssSuccess = injectValue(globalsFile, cssKey, value, dryRun);
-    if (cssSuccess) totalChanges++;
+    if (cssSuccess) {
+      totalChanges++;
+    } else {
+      warnings.push(`Tag @inject:${cssKey} not found in ${globalsFile}`);
+    }
   }
 
   // 3. Idrata la Typography
   for (const [key, value] of Object.entries(tokens.typography || {})) {
+    // In tokens.ts: typography.sans = '...'
     const tsSuccess = injectValue(tokensFile, key, value, dryRun);
-    if (tsSuccess) totalChanges++;
+    if (tsSuccess) {
+      totalChanges++;
+    } else {
+      warnings.push(`Tag @inject:${key} not found in ${tokensFile}`);
+    }
     
+    // In globals.css: --font-sans: '...'
     const cssKey = `font-${key}`;
     const cssSuccess = injectValue(globalsFile, cssKey, value, dryRun);
-    if (cssSuccess) totalChanges++;
+    if (cssSuccess) {
+      totalChanges++;
+    } else {
+      warnings.push(`Tag @inject:${cssKey} not found in ${globalsFile}`);
+    }
   }
 
   if (!dryRun) {
     console.log(chalk.green(`✅ Hydrated ${totalChanges} values`));
+    if (warnings.length > 0) {
+      console.warn(chalk.yellow(`⚠️  ${warnings.length} warnings`));
+    }
   } else {
     console.log(chalk.yellow(`🔍 Simulated ${totalChanges} changes`));
   }
