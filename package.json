@@ -14,9 +14,9 @@
     "hydrate": "node src/cli.js hydrate",
     "hydrate:tokens": "node src/cli.js hydrate:tokens",
     "hydrate:dry": "node src/cli.js hydrate --dry-run",
-    "migrate:components": "node src/cli.js migrate:components",
-    "analyze": "node src/cli.js analyze",
-    "restore": "node src/cli.js restore",
+    
+    
+    
     "test": "vitest run",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
