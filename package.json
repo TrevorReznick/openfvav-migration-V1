@@ -14,31 +14,22 @@
     "hydrate": "node src/cli.js hydrate",
     "hydrate:tokens": "node src/cli.js hydrate:tokens",
     "hydrate:dry": "node src/cli.js hydrate --dry-run",
-    
-    
-    
     "test": "vitest run",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src/**/*.js"
   },
   "dependencies": {
-    "@babel/generator": "^7.24.0",
-    "@babel/parser": "^7.24.0",
-    "@babel/traverse": "^7.24.0",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
-    "fs-extra": "^11.2.0",
     "glob": "^10.3.10",
     "inquirer": "^9.2.15",
     "postcss": "^8.4.35",
-    "postcss-scss": "^4.0.9",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^8.57.0",
-    "rimraf": "^5.0.5",
     "vitest": "^2.1.9"
   },
   "engines": {
