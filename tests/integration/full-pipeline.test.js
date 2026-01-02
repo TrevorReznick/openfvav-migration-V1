@@ -32,21 +32,21 @@ describe('TokenEngine - Full Real Pipeline', () => {
       `${TEST_V6}/src/lib/tokens.ts`,
       `export const tokens = {
   colors: {
-    // @inject:primary
+    // @inject:--primary
     primary: 'PLACEHOLDER',
-    // @inject:background
+    // @inject:--background
     background: 'PLACEHOLDER',
-    // @inject:card
+    // @inject:--card
     card: 'PLACEHOLDER',
   },
   spacing: {
-    // @inject:1
+    // @inject:--1
     1: 'PLACEHOLDER',
-    // @inject:4
+    // @inject:--4
     4: 'PLACEHOLDER',
   },
   typography: {
-    // @inject:sans
+    // @inject:--sans
     sans: 'PLACEHOLDER',
   }
 } as const;`
@@ -55,11 +55,11 @@ describe('TokenEngine - Full Real Pipeline', () => {
     writeFileSync(
       `${TEST_V6}/src/styles/globals.css`,
       `:root {
-  /* @inject:primary */
+  /* @inject:--primary */
   --primary: PLACEHOLDER;
-  /* @inject:background */
+  /* @inject:--background */
   --background: PLACEHOLDER;
-  /* @inject:spacing-1 */
+  /* @inject:--spacing-1 */
   --spacing-1: PLACEHOLDER;
 }`
     );

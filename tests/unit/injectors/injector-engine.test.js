@@ -63,4 +63,39 @@ describe('Injector Engine', () => {
     const result = injectValue(testFile, 'non-existent-key', 'value');
     expect(result).toBe(false);
   });
+
+  it('should not create double quotes when injecting values', () => {
+    // Create a test file with typography injection
+    const typographyFile = resolve(__dirname, 'test-typography.ts');
+    const typographyContent = `export const tokens = {
+  typography: {
+    // @inject:--sans
+    sans: 'PLACEHOLDER',
+  }
+}`;
+
+    // Write the test file
+    writeFileSync(typographyFile, typographyContent, 'utf-8');
+
+    try {
+      // Test with a value that contains quotes (like CSS font-family)
+      const valueWithQuotes = "'Inter', system-ui, sans-serif";
+      const result = injectValue(typographyFile, '--sans', valueWithQuotes, false);
+      expect(result).toBe(true);
+
+      // Read the result
+      const resultContent = readFileSync(typographyFile, 'utf-8');
+
+      // Should contain the clean value without double quotes
+      expect(resultContent).toContain("sans: 'Inter, system-ui, sans-serif'");
+      expect(resultContent).not.toContain("''Inter"); // No double quotes!
+      expect(resultContent).not.toContain('""Inter'); // No double double quotes!
+
+    } finally {
+      // Clean up
+      if (existsSync(typographyFile)) {
+        rmSync(typographyFile);
+      }
+    }
+  });
 });
