@@ -10,111 +10,123 @@ const ExtractedTokensSchema = z.object({
   colors: z.record(z.string()),
   spacing: z.record(z.string()),
   typography: z.record(z.string()),
+  custom: z.record(z.string()).optional()
 }).strict();
 
-// Import the PostCSS plugin
-import extractTokensPluginModule from './postcss-extractor.mjs';
-
-// Get the plugin function from the module
-const extractTokensPlugin = extractTokensPluginModule.default || extractTokensPluginModule;
-
 /**
- * Estrae tutti i token design da una codebase V3/V4
+ * Estrae TUTTE le variabili CSS e le classifica in modo intelligente
  * @param {string} sourcePath - Percorso root del progetto sorgente
  */
 export async function extractTokensFromCss(sourcePath) {
   console.log(chalk.blue(`🔍 Scanning CSS files in ${sourcePath}...`));
 
   // Trova tutti i file CSS/SCSS
-  const cssFiles = await glob('src/**/*.{css,scss}', {
+  const cssFiles = await glob('**/*.{css,scss}', {
     cwd: sourcePath,
-    absolute: true
+    absolute: true,
+    ignore: ['**/node_modules/**']
   });
 
   if (cssFiles.length === 0) {
     console.warn(chalk.yellow('⚠️ Nessun file CSS trovato nella sorgente'));
-    return { colors: {}, spacing: {}, typography: {} };
+    return { colors: {}, spacing: {}, typography: {}, custom: {} };
   }
 
   console.log(chalk.gray(`   Trovati ${cssFiles.length} file CSS`));
 
   // Leggi tutto il contenuto
-  const allContent = cssFiles
-    .map(file => readFileSync(file, 'utf-8'))
-    .join('\n\n');
-
-  // Contenitori per token
-  const colorTokens = {};
-  const customVariables = {};
-  const typographyTokens = {};
-
-  // Esegui PostCSS extraction
-  try {
-    const processor = postcss();
-    const plugin = extractTokensPlugin({
-      colorTokens,
-      customVariables,
-      typographyTokens
-    });
-    
-    await processor
-      .use(plugin)
-      .process(allContent, { from: undefined });
-  } catch (error) {
-    console.error(chalk.red('❌ Error processing CSS:'), error);
-    throw error;
-  }
-
-  // Normalizza e valida l'output
-  const normalized = normalizeExtractedTokens({
-    colors: colorTokens,
-    custom: customVariables,
-    typography: typographyTokens
-  });
-
-  console.log(chalk.green(
-    `✅ Estratti ${Object.keys(normalized.colors).length} colori, ` +
-    `${Object.keys(normalized.spacing).length} spacing tokens, ` +
-    `${Object.keys(normalized.typography).length} font`
-  ));
-
-  return normalized;
-}
-
-/**
- * Normalizza i nomi dei token estratti per adattarli allo schema V6
- */
-function normalizeExtractedTokens(raw) {
-  const colors = {};
-  const spacing = {};
-  const typography = {};
-
-  // Normalizza colori: rimuovi prefissi --color- e suffissi -color
-  for (const [key, val] of Object.entries(raw.colors || {})) {
-    const cleanKey = key
-      .replace(/^--color-/, '')
-      .replace(/--color$/, '')
-      .replace(/-color$/, '');
-    colors[cleanKey] = val;
-  }
-
-  // Estrai spacing da variabili custom (--spacing-1, --space-2, ecc.)
-  for (const [key, val] of Object.entries(raw.custom || {})) {
-    const spacingMatch = key.match(/^--(?:spacing|space)-(\d+)$/);
-    if (spacingMatch) {
-      spacing[spacingMatch[1]] = val;
+  let allContent = '';
+  for (const file of cssFiles) {
+    try {
+      allContent += `\n/* Source: ${file} */\n${readFileSync(file, 'utf-8')}\n`;
+    } catch (error) {
+      console.warn(chalk.yellow(`⚠️ Impossibile leggere il file ${file}: ${error.message}`));
     }
   }
 
-  // Normalizza typography: rimuovi prefisso font- e formatta correttamente il valore
-  const normalizedTypography = {};
-  Object.entries(raw.typography || {}).forEach(([k, v]) => {
-    const cleanKey = k.replace(/^--font-/, '');
-    // Rimuove apici singoli o doppi all'inizio e alla fine, poi racchiude tutto in un solo paio di apici singoli
-    // Rimuove TUTTI gli apici singoli/doppi dal valore
-    const fullyCleanValue = v.trim().replace(/['"]/g, "");
-    normalizedTypography[cleanKey] = fullyCleanValue;
-  });
+  // Estrai tutte le variabili CSS
+  const allVariables = {};
+  const variableRegex = /--([\w-]+):\s*([^;]+);/g;
+  let match;
 
-  return { colors, spacing, typography: normalizedTypography };
+  while ((match = variableRegex.exec(allContent)) !== null) {
+    const [, name, value] = match;
+    allVariables[name] = value.trim();
+  }
+
+  // Classifica le variabili
+  const tokens = {
+    colors: {},
+    spacing: {},
+    typography: {},
+    custom: {}
+  };
+
+  for (const [name, val] of Object.entries(allVariables)) {
+    // Colori: contiene parole chiave di colore o formati di colore
+    if (name.match(/(color|background|fill|stroke|border|shadow|accent|tint|shade|hue|saturation|lightness|alpha|opacity)/i) ||
+        val.match(/^(#|rgb|hsl|hwb|lab|lch|oklab|oklch|color\(|var\(--color-)/i)) {
+      const cleanName = normalizeColorName(name);
+      tokens.colors[cleanName] = val;
+    }
+    // Spacing: contiene unità di misura
+    else if (val.match(/\d+(?:\.\d+)?(px|rem|em|ex|ch|vh|vw|vmin|vmax|%|cm|mm|in|pt|pc)/)) {
+      const cleanName = normalizeSpacingName(name);
+      tokens.spacing[cleanName] = val;
+    }
+    // Typography: contiene proprietà tipografiche
+    else if (name.match(/font|text|line-height|letter-spacing|word-spacing|text-(align|transform|decoration)/i) ||
+             val.match(/(sans|serif|mono|system-ui)/i)) {
+      const cleanName = normalizeTypographyName(name);
+      // Remove quotes from typography values to prevent double quotes
+      const cleanValue = val.replace(/['"]/g, '').trim();
+      tokens.typography[cleanName] = cleanValue;
+    }
+    // Altro: variabili custom
+    else {
+      tokens.custom[name] = val;
+    }
+  }
+
+  // Validazione finale
+  const result = ExtractedTokensSchema.safeParse(tokens);
+  if (!result.success) {
+    console.error(chalk.red('❌ Errore nella validazione dei token estratti:'), result.error);
+    throw new Error('Formato token non valido');
+  }
+
+  console.log(chalk.green(
+    `✅ Estratti: ${Object.keys(tokens.colors).length} colori, ` +
+    `${Object.keys(tokens.spacing).length} spacing tokens, ` +
+    `${Object.keys(tokens.typography).length} tipografie, ` +
+    `${Object.keys(tokens.custom).length} variabili custom`
+  ));
+
+  return tokens;
+}
+
+// Funzioni di normalizzazione
+function normalizeColorName(name) {
+  return name
+    .replace(/^--/, '')
+    .replace(/^color-/, '')
+    .replace(/-color$/, '')
+    .replace(/[^a-zA-Z0-9-]/g, '-')
+    .toLowerCase();
+}
+
+function normalizeSpacingName(name) {
+  return name
+    .replace(/^--/, '')
+    .replace(/^(spacing|space|gap|margin|padding|inset)-?/i, '')
+    .replace(/[^a-zA-Z0-9-]/g, '-')
+    .toLowerCase();
+}
+
+function normalizeTypographyName(name) {
+  return name
+    .replace(/^--/, '')
+    .replace(/^(font|text|typography)-?/i, '')
+    .replace(/[^a-zA-Z0-9-]/g, '-')
+    .toLowerCase();
 }
