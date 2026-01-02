@@ -1,0 +1,41 @@
+# Riepilogo strategia consolidato per la v2.0.3.**
+
+Il termine corretto non è "sovrascrittura totale", ma "Aggiornamento Chirurgico" (o **Idratazione**). 
+
+Ecco cosa succede a ciascun file durante il comando hydrate:
+
+### 1. src/lib/tokens.ts (TypeScript)
+Cosa succede: La CLI scansiona il file cercando i tag // @inject:nome.
+Cosa cambia: Vengono sostituiti solo i valori tra gli apici (es. 'PLACEHOLDER' diventa '217 91% 60%').
+Cosa RESTA: Tutta la logica che abbiamo scritto (le funzioni getColor, getSpacing, le definizioni dei tipi TypeScript).
+Risultato: Il file mantiene la sua "intelligenza" ma riceve i dati nuovi.
+### 2. src/styles/globals.css (CSS)
+Cosa succede: La CLI cerca i tag /* @inject:nome */.
+Cosa cambia: Vengono aggiornati i valori delle variabili CSS dentro il blocco :root (es. --primary: ...).
+Cosa RESTA: Le direttive @tailwind base, @tailwind components, i tuoi layer personalizzati e tutti i fix fatti al body.
+Risultato: Il CSS si "illumina" con i nuovi colori senza perdere la struttura dei layer Tailwind.
+### 3. tailwind.config.js (o .ts)
+Qui c'è una distinzione importante rispetto ai primi due:
+
+La strategia ideale: Una volta configurato per leggere le variabili CSS (es: primary: 'hsl(var(--primary))'), questo file non dovrebbe più essere toccato dalla migrazione.
+Perché? Perché se aggiungi un colore in V4, la CLI lo inietta nel CSS e nel TS. Se il file Tailwind è già impostato come "mappa generica", vedrà il nuovo colore automaticamente.
+Tuttavia: Se l'estrattore trova una chiave completamente nuova (che non hai mai mappato nel config), la versione avanzata della CLI può aggiungere quella riga nel file config per "registrarla" in Tailwind.
+## 🔄 Il Flusso di Lavoro (Workflow)
+Quando lavori su un nuovo progetto (come quello di Lovable che hai appena postato):
+
+* FASE 0 (Setup-V6): Usi il comando setup-v6 (o lo script Bash) per creare i file core in V6. Questi file nascono con i tag @inject e i valori di default.
+* FASE 1 (Extraction): Lanci hydrate. La CLI legge il CSS di Lovable. Grazie alla modifica "Tailwind-Aware" che abbiamo discusso, ora estrae anche i nomi senza prefisso (--primary, --background).
+* FASE 2 (Hydration): La CLI inietta i valori di Lovable nei tag @inject di V6.
+
+## RISULTATO:
+I componenti Astro funzionano perché usano le classi Tailwind mappate sulle variabili CSS.
+I componenti React funzionano perché usano getColor() che attinge dall'oggetto tokens aggiornato.
+⚠️ Una nota sulla "Flessibilità" (Astro + React)
+Importare lo stile in entrambi i framework è la mossa vincente perché:
+
+Astro gestisce la parte statica e veloce (HTML/CSS).
+React gestisce la parte interattiva.
+Entrambi però "parlano" lo stesso linguaggio visivo definito nei tuoi file di token.
+In sintesi: Non stiamo distruggendo i file di destinazione, li stiamo "alimentando". Il "guscio" (codice ottimizzato V6) rimane lo stesso, cambiano solo i "muscoli" (i dati dei token).
+
+Sei d'accordo con questa visione "Surgically Injected"? Se sì, il prossimo passo è assicurarti che l'estrattore sia aggiornato per leggere quei nomi di variabili "nudi" del progetto Lovable.
