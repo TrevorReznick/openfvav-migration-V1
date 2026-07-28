@@ -20,8 +20,8 @@ describe('Template Generator', () => {
     await createTokenTemplates(testDir);
 
     const tokensContent = readFileSync(`${testDir}/src/lib/tokens.ts`, 'utf-8');
-    expect(tokensContent).toContain('// @inject:--primary');
-    expect(tokensContent).toContain('// @inject:--1');
+    expect(tokensContent).toContain('// @inject:primary');
+    expect(tokensContent).toContain('// @inject:1');
   });
 
   it('should create proper directory structure', async () => {

@@ -1,7 +1,6 @@
 import { readFileSync } from 'fs';
 import { glob } from 'glob';
 import { join } from 'path';
-import postcss from 'postcss';
 import { z } from 'zod';
 import chalk from 'chalk';
 
@@ -63,8 +62,9 @@ export async function extractTokensFromCss(sourcePath) {
   };
 
   for (const [name, val] of Object.entries(allVariables)) {
-    // Colori: contiene parole chiave di colore o formati di colore
-    if (name.match(/(color|background|fill|stroke|border|shadow|accent|tint|shade|hue|saturation|lightness|alpha|opacity)/i) ||
+    // Colori: contiene parole chiave di colore o formati di colore - regex più permissiva
+    if (name.match(/(background|foreground|primary|secondary|accent|destructive|muted|card|popover|border|input|ring)/i) ||
+        name.match(/(color|fill|stroke|shadow|tint|shade|hue|saturation|lightness|alpha|opacity)/i) ||
         val.match(/^(#|rgb|hsl|hwb|lab|lch|oklab|oklch|color\(|var\(--color-)/i)) {
       const cleanName = normalizeColorName(name);
       tokens.colors[cleanName] = val;
@@ -81,6 +81,10 @@ export async function extractTokensFromCss(sourcePath) {
       // Remove quotes from typography values to prevent double quotes
       const cleanValue = val.replace(/['"]/g, '').trim();
       tokens.typography[cleanName] = cleanValue;
+    }
+    // Radius: cattura il radius come variabile custom importante
+    else if (name.includes('radius')) {
+      tokens.custom['radius'] = val; // Cattura il radius
     }
     // Altro: variabili custom
     else {
