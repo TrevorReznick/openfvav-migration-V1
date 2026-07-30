@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus Observer — Manifest Report</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --accent: #0f3460;
+    --text: #e0e0e0;
+    --highlight: #e94560;
+    --muted: #8888aa;
+    --border: #2a2a4a;
+    --success: #2ecc71;
+    --warning: #f39c12;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+  h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.25rem;
+  }
+  h2 {
+    font-size: 1.25rem;
+    color: var(--highlight);
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--highlight);
+  }
+  h3 {
+    font-size: 1rem;
+    color: var(--text);
+    margin: 1.5rem 0 0.5rem;
+  }
+  .header {
+    margin-bottom: 2rem;
+  }
+  .header .subtitle {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .meta-item {
+    text-align: center;
+  }
+  .meta-item .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .meta-item .value {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5rem 0 1rem;
+    font-size: 0.85rem;
+  }
+  th, td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+  }
+  tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+  tr:hover { background: rgba(233,69,96,0.08); }
+  code {
+    background: var(--accent);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    font-size: 0.85em;
+    color: #ccc;
+  }
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--text);
+    padding: 0.15em 0.55em;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge.method { background: var(--highlight); }
+  /* Pie chart (pure CSS) */
+  .pie-chart {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(
+      var(--highlight) 0% 100%,
+      var(--accent) 100% 100%
+    );
+    margin: 1rem auto;
+  }
+  .pie-legend {
+    display: flex; gap: 1.5rem; justify-content: center;
+    font-size: 0.8rem; margin-top: 0.5rem;
+  }
+  .pie-legend .dot {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 50%; margin-right: 0.35rem;
+  }
+  .dot.local { background: var(--highlight); }
+  .dot.external { background: var(--accent); }
+  /* Bar chart */
+  .bar-row {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin: 0.4rem 0;
+  }
+  .bar-label { width: 80px; font-size: 0.8rem; color: var(--muted); text-align: right; }
+  .bar-count { width: 30px; font-size: 0.85rem; text-align: right; font-weight: 600; }
+  .bar-track { flex: 1; height: 12px; background: var(--border); border-radius: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--highlight); border-radius: 6px; transition: width 0.3s; }
+  /* Swatches */
+  .swatches { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0 1rem; }
+  .swatch-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: var(--border); padding: 0.4rem 0.6rem; border-radius: 6px;
+    font-size: 0.8rem;
+  }
+  .swatch-circle {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+  .swatch-info { display: flex; flex-direction: column; }
+  .swatch-info code { background: none; padding: 0; font-size: 0.75rem; }
+  .swatch-info span { color: var(--muted); font-size: 0.7rem; }
+  /* Collapsible */
+  details { margin: 0.5rem 0; }
+  details summary {
+    cursor: pointer; padding: 0.5rem;
+    color: var(--highlight); font-weight: 600; font-size: 0.9rem;
+    user-select: none;
+  }
+  details summary:hover { opacity: 0.8; }
+  /* Integrity */
+  .checksum-block {
+    display: grid; grid-template-columns: 140px 1fr;
+    gap: 0.25rem 1rem; font-size: 0.8rem; margin: 0.5rem 0;
+  }
+  .checksum-block .ck-label { color: var(--muted); }
+  .checksum-block code { font-size: 0.72rem; word-break: break-all; }
+  .validation-status {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.4rem 0.8rem; border-radius: 4px;
+    font-weight: 600; font-size: 0.85rem;
+  }
+  .validation-status.valid { background: rgba(46,204,113,0.15); color: var(--success); }
+  /* Footer */
+  .footer {
+    margin-top: 3rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    text-align: center; font-size: 0.78rem; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>Nexus Observer — Manifest Report</h1>
+    <p class="subtitle">Source: <code>./fixtures/tiny-app</code> &middot; Generated: 2026-07-29T20:39:02.345Z</p>
+  </div>
+
+  <!-- Metadata card -->
+  <div class="card-grid">
+    <div class="card meta-item">
+      <div class="label">Framework</div>
+      <div class="value">astro</div>
+    </div>
+    <div class="card meta-item">
+      <div class="label">Styling</div>
+      <div class="value">css</div>
+    </div>
+    <div class="card meta-item">
+      <div class="label">Language</div>
+      <div class="value">javascript</div>
+    </div>
+    <div class="card meta-item">
+      <div class="label">Files</div>
+      <div class="value">12</div>
+    </div>
+    <div class="card meta-item">
+      <div class="label">Observer</div>
+      <div class="value" style="font-size:0.85rem">nexus-observer/1.0.0</div>
+    </div>
+  </div>
+
+  <!-- Architecture -->
+  <h2>🏗️ Architecture</h2>
+
+  <h3>Pages (3)</h3>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Route</th><th>File</th><th>Framework</th></tr></thead>
+      <tbody>
+      <tr>
+        <td><code>/about</code></td>
+        <td>src/pages/about.astro</td>
+        <td><span class="badge">astro</span></td>
+      </tr>
+
+      <tr>
+        <td><code>/blog/:slug</code></td>
+        <td>src/pages/blog/[slug].astro</td>
+        <td><span class="badge">astro</span></td>
+      </tr>
+
+      <tr>
+        <td><code>/</code></td>
+        <td>src/pages/index.astro</td>
+        <td><span class="badge">astro</span></td>
+      </tr></tbody>
+    </table>
+  </div>
+
+  <h3>Components (5)</h3>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Name</th><th>Type</th><th>Used By</th><th>Styles</th></tr></thead>
+      <tbody>
+      <tr>
+        <td><strong>Button</strong></td>
+        <td><span class="badge">unknown</span></td>
+        <td>1</td>
+        <td>0</td>
+      </tr>
+
+      <tr>
+        <td><strong>Card</strong></td>
+        <td><span class="badge">unknown</span></td>
+        <td>2</td>
+        <td>0</td>
+      </tr>
+
+      <tr>
+        <td><strong>Footer</strong></td>
+        <td><span class="badge">unknown</span></td>
+        <td>0</td>
+        <td>0</td>
+      </tr>
+
+      <tr>
+        <td><strong>Header</strong></td>
+        <td><span class="badge">unknown</span></td>
+        <td>3</td>
+        <td>0</td>
+      </tr>
+
+      <tr>
+        <td><strong>Layout</strong></td>
+        <td><span class="badge">layout</span></td>
+        <td>3</td>
+        <td>0</td>
+      </tr></tbody>
+    </table>
+  </div>
+
+  <h3>Route Map</h3>
+  <details>
+    <summary>3 routes defined</summary>
+    <div class="card" style="overflow-x:auto; margin-top:0.5rem;">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Page ID</th></tr></thead>
+        <tbody>
+      <tr>
+        <td><span class="badge method">GET</span></td>
+        <td><code>/about</code></td>
+        <td><code>463363c1</code></td>
+      </tr>
+
+      <tr>
+        <td><span class="badge method">GET</span></td>
+        <td><code>/blog/:slug</code></td>
+        <td><code>92972844</code></td>
+      </tr>
+
+      <tr>
+        <td><span class="badge method">GET</span></td>
+        <td><code>/</code></td>
+        <td><code>91e9ce4c</code></td>
+      </tr></tbody>
+      </table>
+    </div>
+  </details>
+
+  <h3>Import Statistics</h3>
+  <div class="card" style="display:flex; align-items:center; justify-content:center; gap:2rem; flex-wrap:wrap;">
+    <div>
+      <div class="pie-chart"></div>
+      <div class="pie-legend">
+        <span><span class="dot local"></span> Local (9)</span>
+        <span><span class="dot external"></span> External (0)</span>
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:2rem; font-weight:700;">9</div>
+      <div style="color:var(--muted);">Total Imports</div>
+    </div>
+  </div>
+
+  <!-- Design Tokens -->
+  <h2>🎨 Design Tokens</h2>
+
+  <h3>Token Breakdown</h3>
+  <div class="card">
+    
+      <div class="bar-row">
+        <span class="bar-label">Color</span>
+        <span class="bar-count">14</span>
+        <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+      </div>
+
+      <div class="bar-row">
+        <span class="bar-label">Spacing</span>
+        <span class="bar-count">14</span>
+        <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+      </div>
+
+      <div class="bar-row">
+        <span class="bar-label">Typography</span>
+        <span class="bar-count">6</span>
+        <div class="bar-track"><div class="bar-fill" style="width:43%"></div></div>
+      </div>
+
+      <div class="bar-row">
+        <span class="bar-label">Radius</span>
+        <span class="bar-count">0</span>
+        <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+      </div>
+
+      <div class="bar-row">
+        <span class="bar-label">Shadow</span>
+        <span class="bar-count">0</span>
+        <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+      </div>
+
+      <div class="bar-row">
+        <span class="bar-label">Custom</span>
+        <span class="bar-count">0</span>
+        <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+      </div>
+    <p style="text-align:center; margin-top:0.75rem; color:var(--muted); font-size:0.8rem;">
+      34 total tokens across 3 categories
+    </p>
+  </div>
+
+  <h3>Color Swatches (14)</h3>
+  <div class="card">
+    <div class="swatches">
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:#3b82f6"></div>
+        <div class="swatch-info">
+          <code>primary</code>
+          <span>#3b82f6</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:#2563eb"></div>
+        <div class="swatch-info">
+          <code>primary-hover</code>
+          <span>#2563eb</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:#ffffff"></div>
+        <div class="swatch-info">
+          <code>primary-foreground</code>
+          <span>#ffffff</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:#6b7280"></div>
+        <div class="swatch-info">
+          <code>secondary</code>
+          <span>#6b7280</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:#ffffff"></div>
+        <div class="swatch-info">
+          <code>secondary-foreground</code>
+          <span>#ffffff</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:#f9fafb"></div>
+        <div class="swatch-info">
+          <code>background</code>
+          <span>#f9fafb</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:#ffffff"></div>
+        <div class="swatch-info">
+          <code>surface</code>
+          <span>#ffffff</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:#111827"></div>
+        <div class="swatch-info">
+          <code>text-primary</code>
+          <span>#111827</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:#4b5563"></div>
+        <div class="swatch-info">
+          <code>text-secondary</code>
+          <span>#4b5563</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:#9ca3af"></div>
+        <div class="swatch-info">
+          <code>text-tertiary</code>
+          <span>#9ca3af</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:#e5e7eb"></div>
+        <div class="swatch-info">
+          <code>border</code>
+          <span>#e5e7eb</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:0 1px 2px rgba(0, 0, 0, 0.05)"></div>
+        <div class="swatch-info">
+          <code>shadow-sm</code>
+          <span>0 1px 2px rgba(0, 0, 0, 0.05)</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:0 4px 6px rgba(0, 0, 0, 0.1)"></div>
+        <div class="swatch-info">
+          <code>shadow-md</code>
+          <span>0 4px 6px rgba(0, 0, 0, 0.1)</span>
+        </div>
+      </div>
+
+      <div class="swatch-item">
+        <div class="swatch-circle" style="background:0 10px 15px rgba(0, 0, 0, 0.1)"></div>
+        <div class="swatch-info">
+          <code>shadow-lg</code>
+          <span>0 10px 15px rgba(0, 0, 0, 0.1)</span>
+        </div>
+      </div></div>
+  </div>
+
+  <h3>Spacing Tokens</h3>
+  <div class="card" style="overflow-x:auto">
+    <table>
+    <thead><tr><th>Name</th><th>Value</th><th>Source</th></tr></thead>
+    <tbody>
+    <tr>
+      <td><code>1</code></td>
+      <td><code>0.25rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:16</td>
+    </tr>
+
+    <tr>
+      <td><code>2</code></td>
+      <td><code>0.5rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:17</td>
+    </tr>
+
+    <tr>
+      <td><code>3</code></td>
+      <td><code>0.75rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:18</td>
+    </tr>
+
+    <tr>
+      <td><code>4</code></td>
+      <td><code>1rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:19</td>
+    </tr>
+
+    <tr>
+      <td><code>6</code></td>
+      <td><code>1.5rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:20</td>
+    </tr>
+
+    <tr>
+      <td><code>font-size-xs</code></td>
+      <td><code>0.75rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:25</td>
+    </tr>
+
+    <tr>
+      <td><code>font-size-sm</code></td>
+      <td><code>0.875rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:26</td>
+    </tr>
+
+    <tr>
+      <td><code>font-size-base</code></td>
+      <td><code>1rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:27</td>
+    </tr>
+
+    <tr>
+      <td><code>font-size-lg</code></td>
+      <td><code>1.125rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:28</td>
+    </tr>
+
+    <tr>
+      <td><code>font-size-xl</code></td>
+      <td><code>1.25rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:29</td>
+    </tr>
+
+    <tr>
+      <td><code>font-size-2xl</code></td>
+      <td><code>1.5rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:30</td>
+    </tr>
+
+    <tr>
+      <td><code>radius-sm</code></td>
+      <td><code>0.25rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:37</td>
+    </tr>
+
+    <tr>
+      <td><code>radius-md</code></td>
+      <td><code>0.5rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:38</td>
+    </tr>
+
+    <tr>
+      <td><code>radius-lg</code></td>
+      <td><code>0.75rem</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:39</td>
+    </tr></tbody>
+  </table>
+  </div>
+
+  <h3>Typography Tokens</h3>
+  <div class="card" style="overflow-x:auto">
+    <table>
+    <thead><tr><th>Name</th><th>Value</th><th>Source</th></tr></thead>
+    <tbody>
+    <tr>
+      <td><code>family-sans</code></td>
+      <td><code>&#x27;Inter&#x27;, system-ui, -apple-system, sans-serif</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:23</td>
+    </tr>
+
+    <tr>
+      <td><code>family-mono</code></td>
+      <td><code>&#x27;JetBrains Mono&#x27;, &#x27;Fira Code&#x27;, monospace</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:24</td>
+    </tr>
+
+    <tr>
+      <td><code>weight-normal</code></td>
+      <td><code>400</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:31</td>
+    </tr>
+
+    <tr>
+      <td><code>weight-medium</code></td>
+      <td><code>500</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:32</td>
+    </tr>
+
+    <tr>
+      <td><code>weight-bold</code></td>
+      <td><code>700</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:33</td>
+    </tr>
+
+    <tr>
+      <td><code>line-height-normal</code></td>
+      <td><code>1.5</code></td>
+      <td style="color:var(--muted)">/Users/default/Sviluppo/Nodejs/projects/openfav-migration/migration-tools/migration-dev-V1/fixtures/tiny-app/src/styles/global.css:34</td>
+    </tr></tbody>
+  </table>
+  </div>
+
+  <h3>Stylesheets (1)</h3>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>File</th><th>Type</th><th>Tokens</th><th>Component</th></tr></thead>
+      <tbody>
+      <tr>
+        <td><code>global.css</code></td>
+        <td><span class="badge">css</span></td>
+        <td>34</td>
+        <td><code>—</code></td>
+      </tr></tbody>
+    </table>
+  </div>
+
+  <!-- Integrity -->
+  <h2>🔐 Integrity</h2>
+  <div class="card">
+    <div class="checksum-block">
+      <span class="ck-label">SHA-256 (repo)</span>
+      <code>866cab799873230a29b65d4ccadbaf607a8313f23e1e47dec1bbf3bbe2b21b44</code>
+      <span class="ck-label">SHA-256 (know)</span>
+      <code>(not yet populated)</code>
+      <span class="ck-label">SHA-256 (defs)</span>
+      <code>(not yet populated)</code>
+    </div>
+    <div style="margin-top:1rem;">
+      <span class="validation-status valid">✅ All checksums valid</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Generated by <strong>nexus-observer/1.0.0</strong> &middot;
+    Schema v1.0.0 &middot;
+    2026-07-29T20:39:02.345Z
+  </div>
+
+</div>
+</body>
+</html>
