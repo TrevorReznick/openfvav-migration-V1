@@ -1,0 +1,60 @@
+---
+export interface Props {
+  siteName?: string;
+  logo?: string;
+}
+
+const { siteName = 'Tiny App', logo } = Astro.props;
+---
+
+<header class="header">
+  <div class="header__inner">
+    <a href="/" class="header__logo">
+      {logo && <img src={logo} alt={siteName} class="header__logo-img" />}
+      <span class="header__title">{siteName}</span>
+    </a>
+    <nav class="header__nav">
+      <a href="/" class="header__link">Home</a>
+      <a href="/about" class="header__link">About</a>
+      <a href="/blog" class="header__link">Blog</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .header {
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--spacing-3) var(--spacing-6);
+  }
+  .header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .header__logo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    text-decoration: none;
+    color: var(--color-text-primary);
+  }
+  .header__title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+  }
+  .header__nav {
+    display: flex;
+    gap: var(--spacing-4);
+  }
+  .header__link {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+  }
+  .header__link:hover {
+    color: var(--color-primary);
+  }
+</style>

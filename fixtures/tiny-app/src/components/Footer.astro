@@ -1,0 +1,51 @@
+---
+export interface Props {
+  copyright?: string;
+}
+
+const currentYear = new Date().getFullYear();
+const { copyright = `© ${currentYear} Tiny App` } = Astro.props;
+---
+
+<footer class="footer">
+  <div class="footer__inner">
+    <p class="footer__copyright">{copyright}</p>
+    <nav class="footer__links">
+      <a href="/privacy" class="footer__link">Privacy</a>
+      <a href="/terms" class="footer__link">Terms</a>
+      <a href="https://github.com" class="footer__link">GitHub</a>
+    </nav>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    padding: var(--spacing-4) var(--spacing-6);
+    margin-top: auto;
+  }
+  .footer__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .footer__copyright {
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-sm);
+  }
+  .footer__links {
+    display: flex;
+    gap: var(--spacing-4);
+  }
+  .footer__link {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+  }
+  .footer__link:hover {
+    color: var(--color-primary);
+  }
+</style>

@@ -1,0 +1,22 @@
+---
+import Layout from '../components/Layout.astro';
+import Header from '../components/Header.astro';
+import Card from '../components/Card.astro';
+import Button from '../components/Button.astro';
+
+const pageTitle = 'Welcome to Tiny App';
+---
+
+<Layout title={pageTitle}>
+  <Header />
+  <main>
+    <h1>{pageTitle}</h1>
+    <p>A minimal Astro application showcasing component composition.</p>
+    <div class="card-grid">
+      <Card title="Getting Started" description="Learn the basics of Tiny App development." />
+      <Card title="Components" description="Explore our collection of reusable UI components." />
+      <Card title="Deploy" description="Ship your app to production in minutes." />
+    </div>
+    <Button label="Get Started" variant="primary" />
+  </main>
+</Layout>

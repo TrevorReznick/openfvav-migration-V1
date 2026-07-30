@@ -1,0 +1,21 @@
+---
+import Layout from '../components/Layout.astro';
+import Header from '../components/Header.astro';
+
+const pageTitle = 'About Tiny App';
+---
+
+<Layout title={pageTitle}>
+  <Header />
+  <main>
+    <h1>{pageTitle}</h1>
+    <p>Tiny App is a minimal Astro project designed to validate the Nexus observer pipeline.</p>
+    <p>Built with Astro, it demonstrates:</p>
+    <ul>
+      <li>File-based routing</li>
+      <li>Component composition</li>
+      <li>CSS custom properties</li>
+      <li>Design token extraction</li>
+    </ul>
+  </main>
+</Layout>

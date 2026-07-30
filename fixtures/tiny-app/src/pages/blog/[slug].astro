@@ -1,0 +1,25 @@
+---
+import Layout from '../../components/Layout.astro';
+import Header from '../../components/Header.astro';
+import Card from '../../components/Card.astro';
+
+export async function getStaticPaths() {
+  return [
+    { params: { slug: 'hello-world' } },
+    { params: { slug: 'astro-guide' } },
+    { params: { slug: 'nexus-pipeline' } },
+  ];
+}
+
+const { slug } = Astro.params;
+const pageTitle = `Blog: ${slug}`;
+---
+
+<Layout title={pageTitle}>
+  <Header />
+  <main>
+    <h1>Blog Post</h1>
+    <Card title={slug} description={`Content for ${slug} goes here.`} />
+    <p>This dynamic route demonstrates parameterized pages.</p>
+  </main>
+</Layout>
